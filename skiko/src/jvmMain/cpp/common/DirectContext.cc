@@ -216,7 +216,7 @@ private:
     JNIEnv* getEnv() const {
         JNIEnv* env = nullptr;
         if (fJvm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) == JNI_OK) return env;
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(_JAVASOFT_JNI_H_)
         if (fJvm->AttachCurrentThread(&env, nullptr) == JNI_OK) return env;
 #else
         if (fJvm->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr) == JNI_OK) return env;
