@@ -13,9 +13,15 @@
 #include "ports/SkFontScanner_FreeType.h"
 #endif
 
-#ifdef SK_BUILD_FOR_ANDROID
+#if defined(SK_BUILD_FOR_ANDROID) || defined(__ANDROID__)
 #include "ports/SkFontMgr_android.h"
 #include "ports/SkFontScanner_FreeType.h"
+#include "ports/SkFontMgr_fontconfig.h"
+
+// Compatibility fallback for Android Bionic: forward any FontConfig requests to Android's native font manager
+sk_sp<SkFontMgr> SkFontMgr_New_FontConfig(FcConfig* fc, std::unique_ptr<SkFontScanner> scanner) {
+    return SkFontMgr_New_Android(nullptr, std::move(scanner));
+}
 #endif
 
 #ifdef SKIKO_WASM
@@ -48,10 +54,10 @@ sk_sp<SkFontMgr> SkFontMgrSkikoDefault() {
     return SkFontMgr_New_CoreText(nullptr);
 #elif defined(SK_BUILD_FOR_WIN)
     return SkFontMgr_New_DirectWrite();
+#elif defined(__ANDROID__) || defined(SK_BUILD_FOR_ANDROID)
+    return SkFontMgr_New_Android(nullptr, SkFontScanner_Make_FreeType());
 #elif defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_LINUX)
     return SkFontMgr_New_FontConfig(nullptr, SkFontScanner_Make_FreeType());
-#elif defined(SK_BUILD_FOR_ANDROID)
-    return SkFontMgr_New_Android(nullptr, SkFontScanner_Make_FreeType());
 #else
     return nullptr;
 #endif
