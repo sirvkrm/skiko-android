@@ -23,15 +23,18 @@ public:
         unsigned int w, h, border;
         XGetGeometry(display, window, &wnd, &x, &y, &w, &h, &border, &depth);
 
+        if (depth == 0) {
+            depth = 24;
+        }
         switch(depth) {
             case 16:
                 colorSpace = kRGB_565_SkColorType;
                 break;
             case 24: case 32:
+            default:
+                depth = 24;
                 colorSpace = kBGRA_8888_SkColorType;
                 break;
-            default:
-                colorSpace = kUnknown_SkColorType;
         }
     }
 

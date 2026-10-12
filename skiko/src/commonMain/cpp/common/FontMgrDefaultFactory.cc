@@ -20,6 +20,9 @@
 
 // Compatibility fallback for Android Bionic: forward any FontConfig requests to Android's native font manager
 sk_sp<SkFontMgr> SkFontMgr_New_FontConfig(FcConfig* fc, std::unique_ptr<SkFontScanner> scanner) {
+    if (!scanner) {
+        scanner = SkFontScanner_Make_FreeType();
+    }
     return SkFontMgr_New_Android(nullptr, std::move(scanner));
 }
 #endif
