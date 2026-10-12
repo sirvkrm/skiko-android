@@ -50,13 +50,23 @@ extern "C"
     {
         Display *display = fromJavaPointer<Display *>(displayPtr);
         Window window = fromJavaPointer<Window>(windowPtr);
+        if (!display || !window) {
+            return 0L;
+        }
+
         SoftwareDevice *device = new SoftwareDevice();
         device->display = display;
         device->window = window;
         device->gc = XCreateGC(device->display, device->window, 0, nullptr);
+        if (!device->gc) {
+            delete device;
+            return 0L;
+        }
+
         device->initDevice();
         if (device->colorSpace == kUnknown_SkColorType)
         {
+            delete device;
             return 0L;
         }
 
@@ -73,6 +83,7 @@ extern "C"
         JNIEnv *env, jobject renderer, jlong devicePtr, jint width, jint height)
     {
         SoftwareDevice *device = fromJavaPointer<SoftwareDevice *>(devicePtr);
+        if (!device) return;
         device->surface.reset();
         SkImageInfo info = SkImageInfo::Make(
             width, height, device->colorSpace, kPremul_SkAlphaType,
@@ -84,6 +95,7 @@ extern "C"
         JNIEnv *env, jobject renderer, jlong devicePtr)
     {
         SoftwareDevice *device = fromJavaPointer<SoftwareDevice *>(devicePtr);
+        if (!device || !device->surface) return 0L;
         return toJavaPointer(device->surface.release());
     }
 
@@ -92,6 +104,8 @@ extern "C"
     {
         SoftwareDevice *device = fromJavaPointer<SoftwareDevice *>(devicePtr);
         SkSurface *surface = fromJavaPointer<SkSurface *>(surfacePtr);
+        if (!device || !surface) return;
+
         SkPixmap pm;
         if (!surface->peekPixels(&pm)) {
             return;
@@ -107,20 +121,24 @@ extern "C"
         image.bitmap_unit = bitsPerPixel;
         image.bitmap_bit_order = LSBFirst;
         image.bitmap_pad = bitsPerPixel;
-        image.depth = device->depth;
-        image.bytes_per_line = pm.rowBytes() - pm.width() * pm.info().bytesPerPixel();
+        image.depth = device->depth ? device->depth : 24;
+        image.bytes_per_line = pm.rowBytes();
         image.bits_per_pixel = bitsPerPixel;
         if (!XInitImage(&image)) {
             return;
         }
-        XPutImage(device->display, device->window, device->gc, &image, 0, 0, 0, 0, pm.width(), pm.height());
+        if (device->display && device->window && device->gc) {
+            XPutImage(device->display, device->window, device->gc, &image, 0, 0, 0, 0, pm.width(), pm.height());
+        }
     }
 
     JNIEXPORT void JNICALL Java_org_jetbrains_skiko_renderer_AbstractDirectSoftwareRenderer_disposeDevice(
         JNIEnv *env, jobject renderer, jlong devicePtr)
     {
         SoftwareDevice *device = fromJavaPointer<SoftwareDevice *>(devicePtr);
-        delete device;
+        if (device) {
+            delete device;
+        }
     }
 
     // Backwards compatibility aliases for Android Studio / Compose Desktop (Redrawer)

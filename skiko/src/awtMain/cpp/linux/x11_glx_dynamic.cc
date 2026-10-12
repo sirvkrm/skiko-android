@@ -48,6 +48,7 @@ extern "C" {
 
 // 1. XCloseDisplay
 int XCloseDisplay(Display *display) {
+    if (!display) return 0;
     typedef int (*fn_t)(Display*);
     static fn_t fn = nullptr;
     if (!fn) {
@@ -59,6 +60,7 @@ int XCloseDisplay(Display *display) {
 
 // 2. XCreateGC
 GC XCreateGC(Display *display, Drawable d, unsigned long valuemask, XGCValues *values) {
+    if (!display) return nullptr;
     typedef GC (*fn_t)(Display*, Drawable, unsigned long, XGCValues*);
     static fn_t fn = nullptr;
     if (!fn) {
@@ -70,6 +72,7 @@ GC XCreateGC(Display *display, Drawable d, unsigned long valuemask, XGCValues *v
 
 // 3. XFree
 int XFree(void *data) {
+    if (!data) return 0;
     typedef int (*fn_t)(void*);
     static fn_t fn = nullptr;
     if (!fn) {
@@ -81,6 +84,7 @@ int XFree(void *data) {
 
 // 4. XFreeGC
 int XFreeGC(Display *display, GC gc) {
+    if (!display || !gc) return 0;
     typedef int (*fn_t)(Display*, GC);
     static fn_t fn = nullptr;
     if (!fn) {
