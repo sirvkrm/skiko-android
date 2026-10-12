@@ -229,6 +229,61 @@ extern "C"
         }
     }
 
+    // Backwards compatibility aliases for Android Studio / Compose Desktop (Redrawer)
+    JNIEXPORT jlong JNICALL Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRedrawer_makeOffScreenContext(
+        JNIEnv *env, jobject redrawer)
+    {
+        return Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRenderer_makeOffScreenContext(env, redrawer);
+    }
+
+    JNIEXPORT void JNICALL Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRedrawer_disposeOffScreenContext(
+        JNIEnv *env, jobject redrawer, jlong contextPtr)
+    {
+        Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRenderer_disposeOffScreenContext(env, redrawer, contextPtr);
+    }
+
+    JNIEXPORT jlong JNICALL Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRedrawer_makeOffScreenBuffer(
+        JNIEnv *env, jobject redrawer, jlong contextPtr, jlong oldBufferPtr, jint width, jint height)
+    {
+        return Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRenderer_makeOffScreenBuffer(env, redrawer, contextPtr, oldBufferPtr, width, height);
+    }
+
+    JNIEXPORT void JNICALL Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRedrawer_disposeOffScreenBuffer(
+        JNIEnv *env, jobject redrawer, jlong bufferPtr)
+    {
+        Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRenderer_disposeOffScreenBuffer(env, redrawer, bufferPtr);
+    }
+
+    JNIEXPORT void JNICALL Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRedrawer_startRendering(
+        JNIEnv *env, jobject redrawer, jlong contextPtr, jlong bufferPtr)
+    {
+        Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRenderer_startRendering(env, redrawer, contextPtr, bufferPtr);
+    }
+
+    JNIEXPORT void JNICALL Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRedrawer_finishRendering(
+        JNIEnv *env, jobject redrawer, jlong contextPtr)
+    {
+        Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRenderer_finishRendering(env, redrawer, contextPtr);
+    }
+
+    JNIEXPORT jlong JNICALL Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRedrawer_createAndBindTexture(
+        JNIEnv *env, jobject redrawer, jint width, jint height)
+    {
+        return Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRenderer_createAndBindTexture(env, redrawer, width, height);
+    }
+
+    JNIEXPORT GLuint JNICALL Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRedrawer_getFboId(
+        JNIEnv *env, jobject redrawer, jlong texturePtr)
+    {
+        return Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRenderer_getFboId(env, redrawer, texturePtr);
+    }
+
+    JNIEXPORT void JNICALL Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRedrawer_unbindAndDisposeTexture(
+        JNIEnv *env, jobject redrawer, jlong texturePtr)
+    {
+        Java_org_jetbrains_skiko_swing_LinuxOpenGLSwingRenderer_unbindAndDisposeTexture(env, redrawer, texturePtr);
+    }
+
     JNIEXPORT jlong JNICALL Java_org_jetbrains_skiko_graphicapi_OpenGLOffscreenContext_makeOffScreenContext(
         JNIEnv *env, jobject contextHandler)
     {

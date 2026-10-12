@@ -103,4 +103,30 @@ extern "C"
             delete context;
 	    }
     }
+
+    // Backwards compatibility aliases for Android Studio / Compose Desktop (Redrawer)
+    JNIEXPORT void JNICALL Java_org_jetbrains_skiko_redrawer_LinuxOpenGLRedrawerKt_setSwapInterval(JNIEnv *env, jobject redrawer, jlong displayPtr, jlong windowPtr, jint interval)
+    {
+        Java_org_jetbrains_skiko_renderer_LinuxOpenGLRendererKt_setSwapInterval(env, redrawer, displayPtr, windowPtr, interval);
+    }
+
+    JNIEXPORT void JNICALL Java_org_jetbrains_skiko_redrawer_LinuxOpenGLRedrawerKt_swapBuffers(JNIEnv *env, jobject redrawer, jlong displayPtr, jlong windowPtr)
+    {
+        Java_org_jetbrains_skiko_renderer_LinuxOpenGLRendererKt_swapBuffers(env, redrawer, displayPtr, windowPtr);
+    }
+
+    JNIEXPORT void JNICALL Java_org_jetbrains_skiko_redrawer_LinuxOpenGLRedrawerKt_makeCurrent(JNIEnv *env, jobject redrawer, jlong displayPtr, jlong windowPtr, jlong contextPtr)
+    {
+        Java_org_jetbrains_skiko_renderer_LinuxOpenGLRendererKt_makeCurrent(env, redrawer, displayPtr, windowPtr, contextPtr);
+    }
+
+    JNIEXPORT jlong JNICALL Java_org_jetbrains_skiko_redrawer_LinuxOpenGLRedrawerKt_createContext(JNIEnv *env, jobject redrawer, jlong displayPtr, jboolean transparency)
+    {
+        return Java_org_jetbrains_skiko_renderer_LinuxOpenGLRendererKt_createContext(env, redrawer, displayPtr, transparency);
+    }
+
+    JNIEXPORT void JNICALL Java_org_jetbrains_skiko_redrawer_LinuxOpenGLRedrawerKt_destroyContext(JNIEnv *env, jobject redrawer, jlong displayPtr, jlong contextPtr)
+    {
+        Java_org_jetbrains_skiko_renderer_LinuxOpenGLRendererKt_destroyContext(env, redrawer, displayPtr, contextPtr);
+    }
 }

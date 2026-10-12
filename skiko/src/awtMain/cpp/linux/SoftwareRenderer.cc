@@ -122,4 +122,35 @@ extern "C"
         SoftwareDevice *device = fromJavaPointer<SoftwareDevice *>(devicePtr);
         delete device;
     }
+
+    // Backwards compatibility aliases for Android Studio / Compose Desktop (Redrawer)
+    JNIEXPORT jlong JNICALL Java_org_jetbrains_skiko_redrawer_LinuxSoftwareRedrawer_createDevice(
+        JNIEnv *env, jobject redrawer, jlong displayPtr, jlong windowPtr, jint width, jint height)
+    {
+        return Java_org_jetbrains_skiko_renderer_LinuxSoftwareRenderer_createDevice(env, redrawer, displayPtr, windowPtr, width, height);
+    }
+
+    JNIEXPORT void JNICALL Java_org_jetbrains_skiko_redrawer_AbstractDirectSoftwareRedrawer_resize(
+        JNIEnv *env, jobject redrawer, jlong devicePtr, jint width, jint height)
+    {
+        Java_org_jetbrains_skiko_renderer_AbstractDirectSoftwareRenderer_resize(env, redrawer, devicePtr, width, height);
+    }
+
+    JNIEXPORT jlong JNICALL Java_org_jetbrains_skiko_redrawer_AbstractDirectSoftwareRedrawer_acquireSurface(
+        JNIEnv *env, jobject redrawer, jlong devicePtr)
+    {
+        return Java_org_jetbrains_skiko_renderer_AbstractDirectSoftwareRenderer_acquireSurface(env, redrawer, devicePtr);
+    }
+
+    JNIEXPORT void JNICALL Java_org_jetbrains_skiko_redrawer_AbstractDirectSoftwareRedrawer_finishFrame(
+        JNIEnv *env, jobject redrawer, jlong devicePtr, jlong surfacePtr)
+    {
+        Java_org_jetbrains_skiko_renderer_AbstractDirectSoftwareRenderer_finishFrame(env, redrawer, devicePtr, surfacePtr);
+    }
+
+    JNIEXPORT void JNICALL Java_org_jetbrains_skiko_redrawer_AbstractDirectSoftwareRedrawer_disposeDevice(
+        JNIEnv *env, jobject redrawer, jlong devicePtr)
+    {
+        Java_org_jetbrains_skiko_renderer_AbstractDirectSoftwareRenderer_disposeDevice(env, redrawer, devicePtr);
+    }
 }
