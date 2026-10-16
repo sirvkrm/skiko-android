@@ -18,12 +18,17 @@ public:
     SkColorType colorSpace = kUnknown_SkColorType;
 
     void initDevice() {
+        if (!display || !window) {
+            depth = 24;
+            colorSpace = kBGRA_8888_SkColorType;
+            return;
+        }
         Window wnd;
         int x, y;
         unsigned int w, h, border;
-        XGetGeometry(display, window, &wnd, &x, &y, &w, &h, &border, &depth);
+        Status s = XGetGeometry(display, window, &wnd, &x, &y, &w, &h, &border, &depth);
 
-        if (depth == 0) {
+        if (!s || depth == 0) {
             depth = 24;
         }
         switch(depth) {
@@ -74,6 +79,8 @@ extern "C"
         }
 
         device->surface.reset();
+        if (width <= 0) width = 1;
+        if (height <= 0) height = 1;
         SkImageInfo info = SkImageInfo::Make(
             width, height, device->colorSpace, kPremul_SkAlphaType,
             SkColorSpace::MakeSRGB());
@@ -88,6 +95,8 @@ extern "C"
         SoftwareDevice *device = fromJavaPointer<SoftwareDevice *>(devicePtr);
         if (!device) return;
         device->surface.reset();
+        if (width <= 0) width = 1;
+        if (height <= 0) height = 1;
         SkImageInfo info = SkImageInfo::Make(
             width, height, device->colorSpace, kPremul_SkAlphaType,
             SkColorSpace::MakeSRGB());

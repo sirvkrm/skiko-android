@@ -4,10 +4,16 @@
 #include <dlfcn.h>
 
 void* loadXrandr() {
+#if defined(__ANDROID__) || defined(ANDROID) || defined(__BIONIC__)
+    // Termux:X11 / Android X servers do not support full XRandR desktop extension,
+    // and calling XRR without proper extension initialization causes SEGV_MAPERR.
+    return nullptr;
+#else
     static void* result = nullptr;
     if (result != nullptr) return result;
     result = dlopen("libXrandr.so", RTLD_LAZY | RTLD_LOCAL);
     return result;
+#endif
 }
 
 XRRScreenResources* XRRGetScreenResourcesCurrentDynamic(Display* display, Window window) {

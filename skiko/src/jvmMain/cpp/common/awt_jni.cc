@@ -40,6 +40,7 @@ extern "C"
         return 0;
     #else
         JAWT *awt = fromJavaPointer<JAWT *>(awtPtr);
+        if (!awt || !awt->GetDrawingSurface) return 0;
         JAWT_DrawingSurface *ds = awt->GetDrawingSurface(env, layer);
         return toJavaPointer(ds);
     #endif
@@ -53,6 +54,7 @@ extern "C"
     #else
         JAWT *awt = fromJavaPointer<JAWT *>(awtPtr);
         JAWT_DrawingSurface *ds = fromJavaPointer<JAWT_DrawingSurface *>(drawingSurfacePtr);
+        if (!awt || !ds || !awt->FreeDrawingSurface) return;
         awt->FreeDrawingSurface(ds);
     #endif
     }
@@ -64,6 +66,7 @@ extern "C"
          return 0;
     #else
         JAWT_DrawingSurface *ds = fromJavaPointer<JAWT_DrawingSurface *>(drawingSurfacePtr);
+        if (!ds || !ds->Lock) return 1;
         return (ds->Lock(ds) & JAWT_LOCK_ERROR) != 0;
     #endif
     }
@@ -75,6 +78,7 @@ extern "C"
         return;
     #else
         JAWT_DrawingSurface *ds = fromJavaPointer<JAWT_DrawingSurface *>(drawingSurfacePtr);
+        if (!ds || !ds->Unlock) return;
         ds->Unlock(ds);
     #endif
     }
@@ -86,6 +90,7 @@ extern "C"
          return 0;
      #else
         JAWT_DrawingSurface *ds = fromJavaPointer<JAWT_DrawingSurface *>(drawingSurfacePtr);
+        if (!ds || !ds->GetDrawingSurfaceInfo) return 0;
         JAWT_DrawingSurfaceInfo *dsi = ds->GetDrawingSurfaceInfo(ds);
         return toJavaPointer(dsi);
      #endif
@@ -99,6 +104,7 @@ extern "C"
     #else
         JAWT_DrawingSurface *ds = fromJavaPointer<JAWT_DrawingSurface *>(drawingSurfacePtr);
         JAWT_DrawingSurfaceInfo *dsi = fromJavaPointer<JAWT_DrawingSurfaceInfo *>(drawingSurfaceInfoPtr);
+        if (!ds || !dsi || !ds->FreeDrawingSurfaceInfo) return;
         ds->FreeDrawingSurfaceInfo(dsi);
     #endif
     }
@@ -110,6 +116,7 @@ extern "C"
         return 0;
     #else
         JAWT_DrawingSurfaceInfo *dsi = fromJavaPointer<JAWT_DrawingSurfaceInfo *>(drawingSurfaceInfoPtr);
+        if (!dsi) return 0;
         return toJavaPointer(dsi->platformInfo);
     #endif
     }

@@ -137,8 +137,8 @@ extern "C"
 
         std::vector<MonitorInfo> monitors; 
   
-        if (res->outputs && res->ncrtc > 0) {
-            for (int i = 0; i < res->ncrtc; i++)
+        if (res->outputs && res->noutput > 0) {
+            for (int i = 0; i < res->noutput; i++)
             {
                 XRROutputInfo * output_info = XRRGetOutputInfoDynamic(display, res, res->outputs[i]);
                 if (!output_info) continue;
