@@ -29,6 +29,13 @@ public:
     }
 
     static OffScreenContext* create() {
+        const char* envApi = getenv("SKIKO_RENDER_API");
+        if (envApi && (strcmp(envApi, "SOFTWARE_COMPAT") == 0 ||
+                       strcmp(envApi, "SOFTWARE_FAST") == 0 ||
+                       strcmp(envApi, "SOFTWARE") == 0)) {
+            return nullptr;
+        }
+
         const int glxContextAttribs[] {
             GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
             GLX_RENDER_TYPE, GLX_RGBA_BIT,
@@ -41,6 +48,13 @@ public:
         Display* display = XOpenDisplay(nullptr);
 
         if (!display) {
+            return nullptr;
+        }
+
+        // Must verify GLX extension is active on X server before calling glXChooseFBConfig
+        int errorBase = 0, eventBase = 0;
+        if (!glXQueryExtension(display, &errorBase, &eventBase)) {
+            XCloseDisplay(display);
             return nullptr;
         }
 
@@ -90,10 +104,16 @@ public:
     }
 
     ~OffScreenBuffer() {
-        glXDestroyPbuffer(display, pbuffer);
+        if (display && pbuffer) {
+            glXDestroyPbuffer(display, pbuffer);
+        }
     }
 
     static OffScreenBuffer* create(OffScreenContext* context, int width, int height) {
+        if (!context || !context->display || !context->fbConfigs) {
+            return nullptr;
+        }
+
         int pbufferAttribs[] = {
             GLX_PBUFFER_WIDTH, width,
             GLX_PBUFFER_HEIGHT, height,

@@ -204,8 +204,29 @@ XrmDatabase XrmGetStringDatabase(_Xconst char *data) {
     return fn ? fn(data) : nullptr;
 }
 
+// GLX 0. glXQueryExtension
+Bool glXQueryExtension(Display *dpy, int *errorBase, int *eventBase) {
+    if (!dpy) return False;
+    typedef Bool (*fn_t)(Display*, int*, int*);
+    static fn_t fn = nullptr;
+    if (!fn) {
+        void* h = get_libgl();
+        if (h) fn = (fn_t)dlsym(h, "glXQueryExtension");
+    }
+    return fn ? fn(dpy, errorBase, eventBase) : False;
+}
+
 // GLX 1. glXChooseFBConfig
 GLXFBConfig *glXChooseFBConfig(Display *dpy, int screen, const int *attribList, int *nitems) {
+    if (!dpy) {
+        if (nitems) *nitems = 0;
+        return nullptr;
+    }
+    int errB = 0, evB = 0;
+    if (!glXQueryExtension(dpy, &errB, &evB)) {
+        if (nitems) *nitems = 0;
+        return nullptr;
+    }
     typedef GLXFBConfig* (*fn_t)(Display*, int, const int*, int*);
     static fn_t fn = nullptr;
     if (!fn) {
@@ -219,6 +240,11 @@ GLXFBConfig *glXChooseFBConfig(Display *dpy, int screen, const int *attribList, 
 
 // GLX 2. glXChooseVisual
 XVisualInfo *glXChooseVisual(Display *dpy, int screen, int *attribList) {
+    if (!dpy) return nullptr;
+    int errB = 0, evB = 0;
+    if (!glXQueryExtension(dpy, &errB, &evB)) {
+        return nullptr;
+    }
     typedef XVisualInfo* (*fn_t)(Display*, int, int*);
     static fn_t fn = nullptr;
     if (!fn) {
