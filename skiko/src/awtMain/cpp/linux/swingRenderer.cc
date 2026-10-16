@@ -29,62 +29,9 @@ public:
     }
 
     static OffScreenContext* create() {
-        const char* envApi = getenv("SKIKO_RENDER_API");
-        if (envApi && (strcmp(envApi, "SOFTWARE_COMPAT") == 0 ||
-                       strcmp(envApi, "SOFTWARE_FAST") == 0 ||
-                       strcmp(envApi, "SOFTWARE") == 0)) {
-            return nullptr;
-        }
-
-        const int glxContextAttribs[] {
-            GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
-            GLX_RENDER_TYPE, GLX_RGBA_BIT,
-            GLX_RED_SIZE, 8,
-            GLX_GREEN_SIZE, 8,
-            GLX_BLUE_SIZE, 8,
-            None
-        };
-
-        Display* display = XOpenDisplay(nullptr);
-
-        if (!display) {
-            return nullptr;
-        }
-
-        // Must verify GLX extension is active on X server before calling glXChooseFBConfig
-        int errorBase = 0, eventBase = 0;
-        if (!glXQueryExtension(display, &errorBase, &eventBase)) {
-            XCloseDisplay(display);
-            return nullptr;
-        }
-
-        int numConfigs = 0;
-        GLXFBConfig* fbConfigs = glXChooseFBConfig(display, DefaultScreen(display), glxContextAttribs, &numConfigs);
-
-        if (!fbConfigs) {
-            XCloseDisplay(display);
-            return nullptr;
-        }
-
-        XVisualInfo* visual = glXGetVisualFromFBConfig(display, fbConfigs[0]);
-
-        if (!visual) {
-            XFree(fbConfigs);
-            XCloseDisplay(display);
-            return nullptr;
-        }
-
-        GLXContext context = glXCreateContext(display, visual, nullptr, True);
-
-        XFree(visual);
-
-        if (!context) {
-            XFree(fbConfigs);
-            XCloseDisplay(display);
-            return nullptr;
-        }
-
-        return new OffScreenContext(display, context, fbConfigs);
+        // Linux OpenGL Swing offscreen rendering via GLX is not supported on Android Bionic / Termux-X11.
+        // Returning nullptr prompts Skiko to cleanly fall back to SoftwareSwingRenderer.
+        return nullptr;
     }
 };
 

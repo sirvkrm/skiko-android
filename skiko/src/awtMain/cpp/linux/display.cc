@@ -10,30 +10,36 @@ extern "C"
     {
         Display *display = fromJavaPointer<Display *>(displayPtr);
         Window window = fromJavaPointer<Window>(windowPtr);
+        if (!display || !window) return 60.0;
         XRRScreenResources *screenResources = XRRGetScreenResourcesCurrentDynamic(display, window);
 
         RRMode activeModeId = 0;
 
         if (!screenResources) return 60.0;
 
-        for (int i = 0; i < screenResources->ncrtc; ++i) {
-            XRRCrtcInfo *info = XRRGetCrtcInfoDynamic(display, screenResources, screenResources->crtcs[i]);
-            if (info->mode != None) {
-                activeModeId = info->mode;
+        if (screenResources->crtcs && screenResources->ncrtc > 0) {
+            for (int i = 0; i < screenResources->ncrtc; ++i) {
+                XRRCrtcInfo *info = XRRGetCrtcInfoDynamic(display, screenResources, screenResources->crtcs[i]);
+                if (!info) continue;
+                if (info->mode != None) {
+                    activeModeId = info->mode;
+                }
+                XRRFreeCrtcInfoDynamic(info);
             }
-            XRRFreeCrtcInfoDynamic(info);
         }
 
         double rate = 0;
-        for (int i = 0; i < screenResources->nmode; ++i) {
-            XRRModeInfo info = screenResources->modes[i];
-            if (info.id == activeModeId) {
-                rate = (double) info.dotClock / ((double) info.hTotal * (double) info.vTotal);
+        if (screenResources->modes && screenResources->nmode > 0) {
+            for (int i = 0; i < screenResources->nmode; ++i) {
+                XRRModeInfo info = screenResources->modes[i];
+                if (info.id == activeModeId && info.hTotal > 0 && info.vTotal > 0) {
+                    rate = (double) info.dotClock / ((double) info.hTotal * (double) info.vTotal);
+                }
             }
         }
 
         XRRFreeScreenResourcesDynamic(screenResources);
 
-        return rate;
+        return rate > 0.0 ? rate : 60.0;
     }
 }

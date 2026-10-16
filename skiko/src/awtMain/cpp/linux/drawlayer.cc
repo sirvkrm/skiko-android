@@ -24,21 +24,25 @@ extern "C"
     JNIEXPORT jlong JNICALL Java_org_jetbrains_skiko_HardwareLayer_getWindowHandle(JNIEnv *env, jobject canvas, jlong platformInfoPtr)
     {
         JAWT_X11DrawingSurfaceInfo *dsi_x11 = fromJavaPointer<JAWT_X11DrawingSurfaceInfo *>(platformInfoPtr);
+        if (!dsi_x11 || !dsi_x11->display) return 0;
         Window win = dsi_x11->drawable;
+        if (!win) return 0;
         Window parent = win;
         Window root = None;
-        Window *children;
-        unsigned int nchildren;
+        Window *children = nullptr;
+        unsigned int nchildren = 0;
         Status s;
 
         while (parent != root) {
             win = parent;
             s = XQueryTree(dsi_x11->display, win, &root, &parent, &children, &nchildren);
 
-            if (s)
+            if (s && children) {
                 XFree(children);
-            else
+                children = nullptr;
+            } else if (!s) {
                 return 0;
+            }
         }
         return (jlong)win;
     }
@@ -46,11 +50,13 @@ extern "C"
     JNIEXPORT jlong JNICALL Java_org_jetbrains_skiko_HardwareLayer_getContentHandle(JNIEnv *env, jobject canvas, jlong platformInfoPtr)
     {
         JAWT_X11DrawingSurfaceInfo *dsi_x11 = fromJavaPointer<JAWT_X11DrawingSurfaceInfo *>(platformInfoPtr);
+        if (!dsi_x11) return 0;
         return (jlong) dsi_x11->drawable;
     }
 
     double getDpiScaleByDisplay(Display *display)
     {
+        if (!display) return 1.0;
         char *resourceManager = XResourceManagerString(display);
         if (resourceManager != nullptr)
         {
@@ -58,6 +64,7 @@ extern "C"
             if (db != nullptr)
             {
                 XrmValue value;
+                value.addr = nullptr;
 
                 char *type;
                 XrmGetResource(db, "Xft.dpi", "Xft.dpi", &type, &value);
@@ -121,74 +128,90 @@ extern "C"
     JNIEXPORT jint JNICALL Java_org_jetbrains_skiko_HardwareLayer_getCurrentDPI(JNIEnv *env, jobject canvas, jlong platformInfoPtr)
     {
         JAWT_X11DrawingSurfaceInfo *dsi_x11 = fromJavaPointer<JAWT_X11DrawingSurfaceInfo *>(platformInfoPtr);
+        if (!dsi_x11 || !dsi_x11->display) return 96;
         Display *display = dsi_x11->display;
         Window window = (Window)Java_org_jetbrains_skiko_HardwareLayer_getWindowHandle(env, canvas, platformInfoPtr);
+        if (!window) return 96;
         XRRScreenResources * res = XRRGetScreenResourcesCurrentDynamic(display, window);
-        XRRCrtcInfo *crtc_info;
+        if (!res) return 96;
 
         std::vector<MonitorInfo> monitors; 
   
-        for (int i = 0; i < res->ncrtc; i++)
-        {
-            XRROutputInfo * output_info = XRRGetOutputInfoDynamic(display, res, res->outputs[i]);
-            if (output_info->connection || output_info->crtc == NULL) {
+        if (res->outputs && res->ncrtc > 0) {
+            for (int i = 0; i < res->ncrtc; i++)
+            {
+                XRROutputInfo * output_info = XRRGetOutputInfoDynamic(display, res, res->outputs[i]);
+                if (!output_info) continue;
+                if (output_info->connection || output_info->crtc == None) {
+                    XRRFreeOutputInfoDynamic(output_info);
+                    continue;
+                }
+                XRRCrtcInfo * crtc_info = XRRGetCrtcInfoDynamic(display, res, output_info->crtc);
+                if (!crtc_info) {
+                    XRRFreeOutputInfoDynamic(output_info);
+                    continue;
+                }
+
+                MonitorInfo minfo;
+
+                minfo.x = crtc_info->x;
+                minfo.y = crtc_info->y;
+                minfo.wPx = crtc_info->width;
+                minfo.hPx = crtc_info->height;
+
+                if (crtc_info->rotation == RR_Rotate_90 || crtc_info->rotation == RR_Rotate_270)
+                {
+                    minfo.wMm = output_info->mm_height;
+                    minfo.hMm = output_info->mm_width;
+                }
+                else
+                {
+                    minfo.wMm = output_info->mm_width;
+                    minfo.hMm = output_info->mm_height;
+                }
+                // If XRandr does not provide a physical size, assume the X11 default 96 DPI
+                if (minfo.wMm <= 0 || minfo.hMm <= 0)
+                {
+                    minfo.wMm  = (int) (minfo.wPx * 25.4f / 96.f);
+                    minfo.hMm = (int) (minfo.hPx * 25.4f / 96.f);
+                }
+
+                monitors.push_back(minfo);
+
+                XRRFreeCrtcInfoDynamic(crtc_info);
                 XRRFreeOutputInfoDynamic(output_info);
-                continue;
             }
-            XRRCrtcInfo * crtc_info = XRRGetCrtcInfoDynamic(display, res, output_info->crtc);
-
-            MonitorInfo minfo;
-
-            minfo.x = crtc_info->x;
-            minfo.y = crtc_info->y;
-            minfo.wPx = crtc_info->width;
-            minfo.hPx = crtc_info->height;
-
-            if (crtc_info->rotation == RR_Rotate_90 || crtc_info->rotation == RR_Rotate_270)
-            {
-                minfo.wMm = output_info->mm_height;
-                minfo.hMm = output_info->mm_width;
-            }
-            else
-            {
-                minfo.wMm = output_info->mm_width;
-                minfo.hMm = output_info->mm_height;
-            }
-            // If XRandr does not provide a physical size, assume the X11 default 96 DPI
-            if (minfo.wMm <= 0 || minfo.hMm <= 0)
-            {
-                minfo.wMm  = (int) (minfo.wPx * 25.4f / 96.f);
-                minfo.hMm = (int) (minfo.hPx * 25.4f / 96.f);
-            }
-
-            monitors.push_back(minfo);
-
-            XRRFreeCrtcInfoDynamic(crtc_info);
-            XRRFreeOutputInfoDynamic(output_info);
         }
         XRRFreeScreenResourcesDynamic(res);
 
+        if (monitors.empty()) {
+            return 96;
+        }
+
         if (monitors.size() == 1) {
-            return (jint)(monitors[0].wPx / (monitors[0].wMm / 25.4));
+            double mm = monitors[0].wMm / 25.4;
+            return mm > 0 ? (jint)(monitors[0].wPx / mm) : 96;
         }
 
         // Determining which monitor the current window is open on
         XWindowAttributes xwa;
+        memset(&xwa, 0, sizeof(xwa));
         XGetWindowAttributes(display, window, &xwa);
         int index = 0;
         int maxIntersectSquare = 0;
-        for (int m = 0; m < monitors.size(); m++) {
+        for (size_t m = 0; m < monitors.size(); m++) {
             int intersectSquare = getIntersectSquare(
                 xwa.x, xwa.y, xwa.width, xwa.height,
                 monitors[m].x, monitors[m].y, monitors[m].wPx, monitors[m].hPx
             );
             if (maxIntersectSquare < intersectSquare) {
                 maxIntersectSquare = intersectSquare;
-                index = m;
+                index = (int)m;
             }
         }
 
-        return (jint)(monitors[index].wPx / (monitors[index].wMm / 25.4));
+        double mm = monitors[index].wMm / 25.4;
+        return mm > 0 ? (jint)(monitors[index].wPx / mm) : 96;
     }
 
 } // extern "C"

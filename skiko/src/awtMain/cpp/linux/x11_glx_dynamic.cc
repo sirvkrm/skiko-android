@@ -26,22 +26,9 @@ static void* get_libx11() {
 }
 
 static void* get_libgl() {
-    static void* handle = nullptr;
-    if (handle) return handle;
-    const char* paths[] = {
-        "libGL.so",
-        "libGL.so.1",
-        "libGLX.so",
-        "libGLX.so.0",
-        "/data/data/com.termux/files/usr/lib/libGL.so",
-        "/data/data/com.termux/files/usr/lib/libGL.so.1",
-        nullptr
-    };
-    for (int i = 0; paths[i]; i++) {
-        handle = dlopen(paths[i], RTLD_LAZY | RTLD_GLOBAL);
-        if (handle) break;
-    }
-    return handle;
+    // Termux-X11 and Android Bionic do not support desktop GLX.
+    // Attempting to dlopen/invoke Mesa GLX symbols causes fatal SIGSEGV on Termux-X11.
+    return nullptr;
 }
 
 extern "C" {
